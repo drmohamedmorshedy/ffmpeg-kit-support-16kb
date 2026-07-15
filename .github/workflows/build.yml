@@ -17,7 +17,10 @@ jobs:
           find . -name "*.sh" -exec chmod +x {} \;
 
       - name: Build FFmpegKit
+        shell: bash
         run: |
+          set +e
+
           ./android.sh \
             --enable-openssl \
             --enable-srt \
@@ -27,27 +30,48 @@ jobs:
             --enable-android-media-codec \
             --enable-android-zlib \
             --disable-arm-v7a \
+            --disable-arm-v7a-neon \
             --disable-x86 \
             --disable-x86-64 \
             --api-level=28
 
-      - name: Upload build logs
+          RESULT=$?
+
+          echo ""
+          echo "=========================================="
+          echo "Searching for build.log..."
+          echo "=========================================="
+
+          find . -name build.log
+
+          if [ -f build.log ]; then
+            echo ""
+            echo "============= build.log ============="
+            tail -1000 build.log
+            echo "====================================="
+          else
+            echo "build.log not found in repository root."
+            find . -name "*.log" -exec ls -lh {} \;
+            find . -name "*.log" -exec tail -200 {} \;
+          fi
+
+          exit $RESULT
+
+      - name: Upload build.log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-logs
+          name: build-log
           path: |
+            build.log
             **/build.log
             **/*.log
-            logs/**
-            prebuilt/**
 
-      - name: Upload AAR
+      - name: Upload generated AAR
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ffmpeg-kit-aar
           path: |
-            built-aar/**
-            prebuilt/**
-            **/*.aar
+            prebuilt/**/*.aar
+            android/**/build/outputs/aar/*.aar
