@@ -1,0 +1,35 @@
+name: Build FFmpegKit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: |
+          chmod +x android.sh
+          find . -name "*.sh" -exec chmod +x {} \;
+
+      - name: Build FFmpegKit
+        run: |
+          ./android.sh \
+            --enable-openssl \
+            --enable-srt \
+            --enable-gmp \
+            --enable-libxml2 \
+            --enable-libiconv \
+            --enable-android-media-codec \
+            --enable-android-zlib \
+            --disable-x86 \
+            --disable-x86-64 \
+            --disable-arm-v7a-neon \
+            --api-level=28
+
+      - name: Upload build artifacts
+        uses: actions
