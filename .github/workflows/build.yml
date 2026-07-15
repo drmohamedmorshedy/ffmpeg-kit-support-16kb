@@ -1,26 +1,26 @@
 name: Build FFmpegKit
-
 on:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Make scripts executable
         run: |
           chmod +x android.sh
           find . -name "*.sh" -exec chmod +x {} \;
-
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake libtool pkg-config curl git doxygen nasm \
+            cmake gperf yasm groff
       - name: Build FFmpegKit
         shell: bash
         run: |
           set +e
-
           ./android.sh \
             --enable-openssl \
             --enable-srt \
@@ -34,16 +34,12 @@ jobs:
             --disable-x86 \
             --disable-x86-64 \
             --api-level=28
-
           RESULT=$?
-
           echo ""
           echo "=========================================="
           echo "Searching for build.log..."
           echo "=========================================="
-
           find . -name build.log
-
           if [ -f build.log ]; then
             echo ""
             echo "============= build.log ============="
@@ -54,9 +50,7 @@ jobs:
             find . -name "*.log" -exec ls -lh {} \;
             find . -name "*.log" -exec tail -200 {} \;
           fi
-
           exit $RESULT
-
       - name: Upload build.log
         if: always()
         uses: actions/upload-artifact@v4
@@ -66,7 +60,6 @@ jobs:
             build.log
             **/build.log
             **/*.log
-
       - name: Upload generated AAR
         if: success()
         uses: actions/upload-artifact@v4
